@@ -1,0 +1,7 @@
+{
+  "task_name": "pick_place",
+  "num_episodes": 5,
+  "camera_names": ["realsence1","gelsight"],
+  "is_sim": true,
+  "state_dim": 4
+}
