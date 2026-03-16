@@ -22,7 +22,7 @@ e = IPython.embed
 
 import cv2
 
-from visualization_utils import visualise_trajectory, z_slider
+# from visualization_utils import visualise_trajectory, z_slider
 
 # Note about debug:
 # we used the global variable debug to trigger plotting in the training loop. This is a bit of a hack, but it works.
@@ -78,7 +78,7 @@ def main(args):
     camera_names: List[str] = meta_data['camera_names']
     is_sim: bool = meta_data['is_sim']
     state_dim:int = meta_data['state_dim']
-
+    
     norm_stats = get_norm_stats(dataset_dir, num_episodes, chunk_size=chunk_size)
 
     # save norm stats to args. Need to convert from numpy to list
@@ -143,7 +143,10 @@ def main(args):
     else:
         raise NotImplementedError(f'Policy class {policy_class} not implemented')
     
-    policy.cuda()
+    if torch.cuda.is_available():
+        policy.cuda()
+    else:
+        print("⚠️ GPU not available, using CPU for training")
     
 
     if is_eval:
@@ -184,7 +187,6 @@ def main(args):
     stats_path = os.path.join(ckpt_dir, f'dataset_stats.pkl')
     with open(stats_path, 'wb') as f:
         pickle.dump(norm_stats, f)
-
     # construct dataset and dataloader
     train_dataset = EpisodicDatasetDelta(train_indices, dataset_dir, camera_names, norm_stats, chunk_size=chunk_size)
     val_dataset = EpisodicDatasetDelta(val_indices, dataset_dir, camera_names, norm_stats, chunk_size=chunk_size)
@@ -220,60 +222,70 @@ def train_bc(policy:ACTPolicy,
              ):
     
     # policy.cuda()
-    plot_freq = 50
+    plot_freq = 50  # 可视化频率，每隔多少个epoch进行一次可视化 
 
-    train_history = []
-    validation_history = []
-    min_val_loss = np.inf
-    best_ckpt_info = None
+    train_history = []  # 记录训练过程中的损失和指标
+    validation_history = [] # 记录验证过程中的损失和指标
+    min_val_loss = np.inf   # 记录最低验证损失
+    best_ckpt_info = None   # 记录最佳模型的相关信息
+    # 使用tqdm显示训练进度条
     for epoch in tqdm(range(num_epochs)):
-        print(f'\nEpoch {epoch}')
+        if epoch % plot_freq == 0:
+            print(f'\nEpoch {epoch}')
         # validation
-        with torch.inference_mode():
-            policy.eval()
-            epoch_dicts = []
-            for batch_idx, data in enumerate(val_dataloader):
+        with torch.inference_mode():    # 在验证阶段禁用梯度计算
+            policy.eval()   # 设置模型为评估模式
+            epoch_dicts = []    # 存储每个batch的输出字典
+            for batch_idx, data in enumerate(val_dataloader):   # 遍历验证数据集的每个batch
                 # forward pass
+                # 解包数据
                 image_data, qpos_data, action_data, is_pad = data
 
                 # plot the first batch of every plot_freq epochs
-                if batch_idx == 0 and epoch%plot_freq == 0:
+                # 每个plot_freq个epoch可视化第一个batch的数据
+                if batch_idx == 0 and epoch % plot_freq == 0:
                     debug.plot = True
                     debug.print = False
                     debug.epoch = epoch
                     debug.batch = 0
                     debug.dataset = 'validation'
 
+                # 将数据移动到GPU
                 qpos_data = qpos_data.cuda()
                 image_data = [img.cuda() for img in image_data]
                 action_data = action_data.cuda()
                 is_pad = is_pad.cuda()
                 # evaluation, so we want to ignore the latent variables (we still want them to compute the loss though)
+                # 前向传播，忽略潜在变量
                 forward_dict = policy(qpos_data, image_data, action_data, is_pad, ignore_latent=True)
-
+                # 关闭可视化
                 if batch_idx == 0 and epoch%plot_freq == 0:
                     debug.plot = False
                     debug.print = False
 
+                # 收集每个batch的输出字典
                 epoch_dicts.append(forward_dict)
-            epoch_summary = compute_dict_mean(epoch_dicts)
-            validation_history.append(epoch_summary)
+            epoch_summary = compute_dict_mean(epoch_dicts)  # 计算整个epoch的平均损失和指标
+            validation_history.append(epoch_summary)    # 记录验证历史
 
+            # 更新最佳模型信息
             epoch_val_loss = epoch_summary['loss']
             if epoch_val_loss < min_val_loss:
                 min_val_loss = epoch_val_loss
                 best_ckpt_info = (epoch, min_val_loss, deepcopy(policy.state_dict()))
-        print(f'Val loss:   {epoch_val_loss:.5f}')
+        if epoch % plot_freq == 0:
+            print(f'Val loss:   {epoch_val_loss:.5f}')
         summary_string = ''
         for k, v in epoch_summary.items():
             summary_string += f'{k}: {v.item():.3f} '
-        print(summary_string)
+        if epoch % plot_freq == 0:
+            print(summary_string)
 
         # training
-        policy.train()
-        policy.optimizer.zero_grad()
-        for batch_idx, data in enumerate(train_dataloader):
-
+        policy.train()  # 设置模型为训练模式
+        policy.optimizer.zero_grad()    # 清空梯度
+        for batch_idx, data in enumerate(train_dataloader):  # 遍历训练数据集的每个batch
+            # 解包数据
             image_data, qpos_data, action_data, is_pad = data
             if batch_idx == 0 and epoch%plot_freq == 0:
                 debug.plot = True
@@ -281,18 +293,21 @@ def train_bc(policy:ACTPolicy,
                 debug.epoch = epoch
                 debug.batch = 0
                 debug.dataset = 'train'
-
+            
+            # 将数据移动到GPU
             qpos_data = qpos_data.cuda()
             image_data = [img.cuda() for img in image_data]
             action_data = action_data.cuda()
             is_pad = is_pad.cuda()
+            # 前向传播
             forward_dict = policy(qpos_data, image_data, action_data, is_pad)
-
+            # 关闭可视化
             if batch_idx == 0 and epoch%plot_freq == 0:
                 debug.plot = False
                 debug.print = False
             
             # backward
+            # 计算损失并进行反向传播
             loss = forward_dict['loss']
             loss.backward()
             policy.optimizer.step()
@@ -300,11 +315,13 @@ def train_bc(policy:ACTPolicy,
             train_history.append(detach_dict(forward_dict))
         epoch_summary = compute_dict_mean(train_history[(batch_idx+1)*epoch:(batch_idx+1)*(epoch+1)])
         epoch_train_loss = epoch_summary['loss']
-        print(f'Train loss: {epoch_train_loss:.5f}')
+        if epoch % plot_freq == 0:
+            print(f'Train loss: {epoch_train_loss:.5f}')
         summary_string = ''
         for k, v in epoch_summary.items():
             summary_string += f'{k}: {v.item():.3f} '
-        print(summary_string)
+        if epoch % plot_freq == 0:
+            print(summary_string)
 
         if epoch % 100 == 0:
             ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{epoch}_seed_{seed}.ckpt')
@@ -349,6 +366,7 @@ def plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed):
 
 
 if __name__ == '__main__':
+    # 1.config检查和模型参数设置
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, help='Path to the JSON config file', default=None)
     args, _ = parser.parse_known_args()
@@ -375,6 +393,8 @@ if __name__ == '__main__':
             "num_epochs": int,
             "lr": float,
             "kl_weight": float,
+            "start_kl_epoch": int,
+            "kl_scale_epochs": int,
             "chunk_size": int,
             "hidden_dim": int,
             "dim_feedforward": int,
@@ -428,11 +448,12 @@ if __name__ == '__main__':
         if new_args['eval'] == True and new_args['checkpoint'] == "path/to/checkpoint":
             raise ValueError('checkpoint must be provided in the config file or as a command line argument')
 
-            
+    # 2.根据config运行main
         # run main with the config
         main(config)
         exit() # exit here, as main(config) will run the training loop
-
+    
+    # 3.如果没有config文件，则使用命令行参数
     # If no config file is provided, use the command line arguments  
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--checkpoint', action='store', type=str, help='checkpoint name', required=False, default='policy_best.ckpt')

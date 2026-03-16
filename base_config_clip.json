@@ -5,9 +5,9 @@
     "save_dir": "data/data_dir",
     "name": "retrained_vision_tactile",
     "policy_class": "ACT",
-    "batch_size": 2,
+    "batch_size": 4,
     "seed": 0,
-    "num_epochs": 1000,
+    "num_epochs": 200,
     "lr": 0.00001,
     "kl_weight": 10.0,
     "start_kl_epoch": 0,
@@ -20,7 +20,7 @@
     "gpu": -1,
     "lr_backbone": 1e-5,
     "weight_decay": 1e-4,
-    "backbone": "resnet18",
+    "backbone": "clip_backbone",
     "dilation": false,
     "position_embedding": "sine",
     "enc_layers": 4,
@@ -29,7 +29,7 @@
     "nheads": 8,
     "pre_norm": false,
     "masks": false,
-    "gelsight_backbone_path": "none",
-    "vision_backbone_path": "none"
+    "gelsight_backbone_path": "./data/data_dir/clip_models/0/best_gelsight_encoder.pth",
+    "vision_backbone_path": "./data/data_dir/clip_models/0/best_vision_encoder.pth"
 }
 

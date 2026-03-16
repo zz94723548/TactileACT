@@ -250,6 +250,7 @@ class ClipDataset(torch.utils.data.Dataset):
                 timestep_cam_images = []
 
                 for cam_name in self.camera_names:
+                    #　读取ＲＧＢ图像
                     image = root[f'/observations/images/{cam_name}'][timestep]
                     
                     # convert to tensor
@@ -377,8 +378,8 @@ def clip_loss(image_embeddings:torch.Tensor, gelsight_embeddings:torch.Tensor, t
     gelsight_logits = gelsight_logits.flatten(0, 1)
 
     # need to make the target matrix B, N, N
-    image_loss = F.cross_entropy(image_logits, target_matrix.repeat(image_logits.shape[0], 1, 1), reduce=False).mean(dim=1)
-    gelsight_loss = F.cross_entropy(gelsight_logits, target_matrix.T.repeat(gelsight_logits.shape[0], 1, 1), reduce=False).mean(dim=1)
+    image_loss = F.cross_entropy(image_logits, target_matrix.repeat(image_logits.shape[0], 1, 1), reduction='none').mean(dim=1)
+    gelsight_loss = F.cross_entropy(gelsight_logits, target_matrix.T.repeat(gelsight_logits.shape[0], 1, 1), reduction='none').mean(dim=1)
 
     # print('image_loss:', image_loss.shape)
     # print('gelsight_loss:', gelsight_loss.shape)
@@ -420,7 +421,7 @@ def clip_pretraining(train_loader: DataLoader,
     # get the camera, gelsight, and state dimensions from the dataset
     dataset:ClipDataset = train_loader.dataset
     n_cameras = dataset.n_cameras
-    state_size = 3
+    state_size = 3     # only using position (x, y, z)
 
     # get resnet models for each camera
     # get a resnet18 model
@@ -450,6 +451,11 @@ def clip_pretraining(train_loader: DataLoader,
     
     training_losses = np.empty([n_epochs, n_cameras])
     testing_losses = np.empty([n_epochs, n_cameras])
+    
+    # Track best model
+    best_test_loss = np.inf
+    best_epoch = -1
+    
     for epoch in tqdm(range(n_epochs)):
     # train the model
         training_loss = np.zeros(n_cameras)
@@ -586,7 +592,18 @@ def clip_pretraining(train_loader: DataLoader,
         np.save(f'{save_dir}/graphs/training_losses.npy', training_losses)
         np.save(f'{save_dir}/graphs/testing_losses.npy', testing_losses)
 
-        # save the models
+        # Track best model based on average testing loss
+        epoch_avg_test_loss = testing_losses[epoch].mean()
+        if epoch_avg_test_loss < best_test_loss:
+            best_test_loss = epoch_avg_test_loss
+            best_epoch = epoch
+            # Save best model
+            torch.save(vision_encoder.state_dict(), f'{save_dir}/best_vision_encoder.pth')
+            torch.save(vision_projection.state_dict(), f'{save_dir}/best_vision_projection.pth')
+            torch.save(gelsight_encoder.state_dict(), f'{save_dir}/best_gelsight_encoder.pth')
+            torch.save(gelsight_projection.state_dict(), f'{save_dir}/best_gelsight_projection.pth')
+
+        # save the models periodically
         if (epoch+1) % save_freq == 0:
             torch.save(vision_encoder.state_dict(), f'{save_dir}/epoch_{epoch}_vision_encoder.pth')
             torch.save(vision_projection.state_dict(), f'{save_dir}/epoch_{epoch}_vision_projection.pth')
@@ -594,14 +611,21 @@ def clip_pretraining(train_loader: DataLoader,
             torch.save(gelsight_projection.state_dict(), f'{save_dir}/epoch_{epoch}_gelsight_projection.pth')
 
         # print('logit_scale:', logit_scale)
+    
+    # Save best epoch info
+    with open(f'{save_dir}/best_epoch.txt', 'w') as f:
+        f.write(f'Best epoch: {best_epoch}\n')
+        f.write(f'Best average testing loss: {best_test_loss:.6f}\n')
    
 
 def run_clip_pretraining():
     from utils import get_norm_stats
-    num_episodes = 100
-    dataset_dir = "/home/aigeorge/research/TactileACT/data/camera_cage_new_fixed/data"
-    save_dir = "/home/aigeorge/research/TactileACT/data/camera_cage_new_fixed/clip_models"
-    camera_names = ['1', '2', '3', '4', '5', '6']
+    # ============ Training Configuration ============
+    n_epochs = 301  # Total training epochs (1500 + 1 for checkpoint alignment)
+    num_episodes = 3
+    dataset_dir = "./data/data_dir/data"
+    save_dir = "./data/data_dir/clip_models"
+    camera_names = ['realsence1', 'realsence2']
     norm_stats = get_norm_stats(dataset_dir, num_episodes, use_existing=True)
     batch_size_train = 3
     batch_size_test = 3
@@ -648,7 +672,7 @@ def run_clip_pretraining():
         f.write(f'train_indices: {train_indices}\n')
         f.write(f'val_indices: {val_indices}\n')
         
-    clip_pretraining(train_dataloader, test_dataloader, device, save_dir=f'{save_dir}/{n}', clip_dim=512, features_per_group=16, n_epochs=1501)
+    clip_pretraining(train_dataloader, test_dataloader, device, save_dir=f'{save_dir}/{n}', clip_dim=512, features_per_group=16, n_epochs=n_epochs)
 
 
 def replot_loss_graph(training_losses, testing_losses):

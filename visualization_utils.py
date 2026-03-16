@@ -65,7 +65,7 @@ def visualize_data(image_data, qpos_data, action_pred_data, is_pad_data, action_
     if len(images) > 1:
         axs_left = subfigs[0].subplots(len(images), 1)
         for i, image in enumerate(images):
-            axs_left[i].imshow(image.transpose(1, 2, 0))     
+            axs_left[i].imshow(image.transpose(1, 2, 0))
     elif len(images) == 1:
         subfigs[0].add_subplot(111).imshow(images[0].transpose(1, 2, 0))
     else:

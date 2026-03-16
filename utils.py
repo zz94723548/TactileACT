@@ -204,6 +204,11 @@ def gelsight_norm_stats(dataset_dir, num_episodes) -> tuple:
 
     return gelsight_mean, gelsight_std
 
+# 读取数据集，计算动作和状态的归一化参数
+# dataset_dir: 数据集路径save_dir/data
+# num_episodes: 数据集中的episode数量
+# use_existing: 是否使用已有的归一化参数文件
+# chunk_size: 如果大于0，则计算delta动作的归一化参数
 
 def get_norm_stats(dataset_dir, num_episodes, use_existing=True, chunk_size = 0):
     qpos_data_list = []
@@ -254,13 +259,13 @@ def get_norm_stats(dataset_dir, num_episodes, use_existing=True, chunk_size = 0)
 
     if chunk_size != 0:
         # calculate the mean and std of the delta (position) actions:
+        # delta是4维的，前三维是末端位置变化，第四维是夹爪开合度
         all_deltas = []
         for episode in range(num_episodes):
             len_episode = len(action_data_list[episode])
             for t in range(len_episode - chunk_size):
                 deltas = action_data_list[episode][t:t+chunk_size, 0:3] - qpos_data_list[episode][t][0:3]
                 all_deltas.append(deltas)
-
         all_deltas = np.concatenate(all_deltas, axis=0)
         delta_mean = all_deltas.mean(axis=0)
         delta_std = all_deltas.std(axis=0)
@@ -294,7 +299,10 @@ def set_seed(seed):
     np.random.seed(seed)
 
 if __name__ == "__main__":
-    dataset_dir = "/home/aigeorge/research/TactileACT/data/camera_cage_new_mount/data"
-    num_episodes = 101
+    dataset_dir = "./data/data_dir/data"
+    num_episodes = 5
     norm_stats = get_norm_stats(dataset_dir, num_episodes, use_existing=True, chunk_size=30)
     print(norm_stats)
+    # save norm stats
+    with open(os.path.join(dataset_dir, 'norm_stats.json'), 'w') as f:
+        json.dump({k: v.tolist() for k, v in norm_stats.items()}, f)

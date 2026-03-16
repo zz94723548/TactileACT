@@ -9,6 +9,8 @@ from multiprocessing import Pool
 import json
 from utils import gelsight_norm_stats
 
+# 机械臂数据预处理和格式转换脚本
+
 CROP_PARAMS = {
     1: {'i': 0, 'j': 312, 'h': 1080, 'w': 1296, 'size': (1080, 1920)},
     2: {'i': 108, 'j': 775, 'h': 755, 'w': 906, 'size': (1080, 1920)},
@@ -22,6 +24,7 @@ MASK_VERTICIES = {5: [[0, 0.77], [0.0625, 1], [0, 1]],
                   6: [[0, 0.79], [0.0875, 1], [0, 1]]}
 
 # mask out background of images (for where curtain was taken off)
+# 生成图像掩码，移除背景区域
 def make_masks(image_size, verticies):
     masks = {1: None, 2: None, 3: None, 4: None, 5: None, 6: None}
     for cam in verticies:
@@ -31,7 +34,8 @@ def make_masks(image_size, verticies):
         cv2.fillPoly(mask, [pts], 0)
         masks[cam] = mask
     return masks
-        
+
+# 核心处理函数：从视频AVI中提取图像并存储到HDF5文件中
 def uncompress_data(source_folder, save_path, image_size = [400, 480], masks: Dict[str, np.ndarray] = {}, use_rot = False, gelsight_delay = 2):
     # First, copy the hdf files to the save_path
     # Find the hdf5 files in the source folder
@@ -132,7 +136,7 @@ def uncompress_data(source_folder, save_path, image_size = [400, 480], masks: Di
                                         chunks=(1, image_size[0], image_size[1], 3),
                                         data=images[:-gelsight_delay])       
 
-            
+# 批量处理多个数据文件夹        
 def process_folder(source_folders, save_folder, image_size = [400, 480], masks = {}):
     # find all the episodes in the source folders recursively
     h5py_files = []
@@ -153,6 +157,7 @@ def process_folder(source_folders, save_folder, image_size = [400, 480], masks =
     with Pool() as p:
         p.starmap(uncompress_data, zip(episode_folders, save_paths, [image_size]*len(save_paths), [masks]*len(save_paths)))
 
+# 计算并保存触觉数据的归一化统计信息
 def save_norm_stats(save_folder, num_episodes = None):
     # get the number of episodes
     # find all the episodes in the source folder recursively
@@ -192,6 +197,4 @@ if __name__ == "__main__":
     # source_file = '/home/aigeorge/research/TactileACT/data/original/camara_cage_1/run_0/episode_3'
     # save_file = '/home/aigeorge/research/TactileACT/test.hdf5'
     # uncompress_data(source_file, save_file, image_size, masks, use_rot=False)
-
-
-
+    

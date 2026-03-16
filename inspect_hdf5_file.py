@@ -8,6 +8,7 @@ from tqdm import tqdm
 This file contains helper functions to inspect the contents of an HDF5 file.
 """
 
+# 可视化gelsight数据
 def visualize_gelsight_data(image):
 	# Convert the image to LAB color space
 	max_depth = 10
@@ -18,6 +19,7 @@ def visualize_gelsight_data(image):
 	image[1:] = np.clip(128*(image[1:]/max_strain), -128, 127)
 	return cv2.cvtColor(image, cv2.COLOR_LAB2BGR)
 
+# 递归遍历HDF5文件树，显示所有层级信息
 def print_hdf5_info(group, indent=""):
     for key in group.keys():
         if isinstance(group[key], h5py.Group):
@@ -32,6 +34,7 @@ def print_hdf5_info(group, indent=""):
         print(indent + f"    {attr_name}: {attr_value}")
     print()
 
+# 打印HDF5文件的结构、数据集、属性等信息
 def print_hdf5_file(filename):
     try:
         with h5py.File(filename, 'r') as f:
@@ -43,6 +46,7 @@ def print_hdf5_file(filename):
     except Exception as e:
         print("Error:", e)
 
+# 在窗口中逐帧显示HDF5文件中的RGB图像和触觉数据
 def show_images_in_hdf5_file(filename):
     print('showing images in', filename)
     with h5py.File(filename, 'r') as f:
@@ -62,11 +66,13 @@ def show_images_in_hdf5_file(filename):
             cv2.waitKey(0)
         cv2.waitKey(0)
 
+# 将HDF5中的所有图像帧提取并保存为PNG文件
 def save_images_from_hdf5_file(source_file, save_folder):
     """
     Save the images and gelsight data from the HDF5 file to the save folder.
     Useful for making graphics and visualizations.
     """
+    os.makedirs(save_folder, exist_ok=True)
     with h5py.File(source_file, 'r') as f:
         for idx in tqdm(range(f.attrs['num_timesteps'])):
             print(idx)
@@ -82,10 +88,9 @@ def save_images_from_hdf5_file(source_file, save_folder):
 
 import os
 if __name__ == "__main__":
-    filename = "/home/aigeorge/research/TactileACT/data/camera_cage_new_mount/data/episode_55.hdf5"
-
-    folder = "/home/aigeorge/research/TactileACT/data/camera_cage_new_mount/data"
-    images_folder = "/home/aigeorge/research/TactileACT/data/camera_cage_new_mount/images"
+    filename = "episode_0.hdf5"     # 创建一个示例HDF5文件
+    folder = "./data/data_dir/data"
+    images_folder = "./data/data_dir/images"
     # all_files = []
     # for filename in os.listdir(folder):
     #     if filename.endswith(".hdf5"):
@@ -93,9 +98,10 @@ if __name__ == "__main__":
     # all_files.sort()
 
     for episode_num in [0, 1, 2]:
-        filename = os.path.join(folder, f"episode_{episode_num}.hdf5")
+        filename = f"episode_{episode_num}.hdf5"
         print_hdf5_file(os.path.join(folder, filename))
-        save_images_in_hdf5_file(os.path.join(folder, filename), os.path.join(images_folder, str(episode_num)))
+        # show_images_in_hdf5_file(os.path.join(folder, filename))
+        save_images_from_hdf5_file(os.path.join(folder, filename), os.path.join(images_folder, str(episode_num)))
     exit()
     with h5py.File(filename, 'r') as f:           
         positions = f['observations/qpos'][:, :3]

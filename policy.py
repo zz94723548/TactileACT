@@ -121,7 +121,10 @@ class ACTPolicy(nn.Module):
 
         n_parameters = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print("number of parameters: %.2fM" % (n_parameters/1e6,))
-        self.model.cuda()
+        if torch.cuda.is_available():
+            self.model.cuda()
+        else:
+            print("⚠️ GPU not available, using CPU for training")
 
         # build optimizer
         param_dicts = [

@@ -241,54 +241,10 @@ if __name__ == '__main__':
     # pose_controller = GotoPoseLive(step_size=0.05)
     pose_controller.set_goal_pose(move_pose)
 
+    model_path = "./data/data_dir/data/retrained_vision_tactile/policy_best.ckpt"
+    save_path = "./data/data_dir/data/retrained_vision_tactile/run_data"
+    args_file = "./data/data_dir/data/retrained_vision_tactile/args.json"
 
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_gel_only_20/policy_last.ckpt"
-    # save_path = "data/final_trained_policies/fixed/pretrain_gel_only_20/run_data"
-    # args_file = "data/final_trained_policies/fixed/pretrain_gel_only_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_both_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_both_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_both_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_both_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_both_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_both_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_vision_only_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_vision_only_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_vision_only_20/args.json"
-
-    model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_vision_only_20/policy_last.ckpt"
-    save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_vision_only_20/run_data"
-    args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_vision_only_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/fixed_scene/no_gelsight_pretrained/policy_epoch_3200_seed_0.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/fixed_scene/no_gelsight_pretrained/run_data"
-    # args_file = "/home/abraham/TactileACT/data/fixed_scene/no_gelsight_pretrained/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/fixed_scene/gelsight_only_fixed/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/fixed_scene/gelsight_only_fixed/run_data"
-    # args_file = "/home/abraham/TactileACT/data/fixed_scene/gelsight_only_fixed/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_gel_only_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_gel_only_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/no_pretrain_gel_only_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_gel_only_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_gel_only_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/pretrain_gel_only_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/blank_image_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/fixed/blank_image_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/fixed/blank_image_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/Non-Fixed/pretrain_both_20/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/Non-Fixed/pretrain_both_20/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/Non-Fixed/pretrain_both_20/args.json"
-
-    # model_path = "/home/abraham/TactileACT/data/final_trained_policies/Non-Fixed/ACT/pretrained_both/policy_last.ckpt"
-    # save_path = "/home/abraham/TactileACT/data/final_trained_policies/Non-Fixed/ACT/pretrained_both/run_data"
-    # args_file = "/home/abraham/TactileACT/data/final_trained_policies/Non-Fixed/ACT/pretrained_both/args.json"
 
 
     """# pretend to be a robot by loading a dataset
