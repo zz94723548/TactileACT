@@ -74,8 +74,12 @@ def load_ACT(model_path, args_file:str = None) -> ACTPolicy:
     return act
 
 if __name__ == '__main__':
-    model_path = "/home/aigeorge/research/TactileACT/data/camera_cage/pretrained_1999_melted/policy_last.ckpt"
-    args_file = "/home/aigeorge/research/TactileACT/data/camera_cage/pretrained_1999_melted_0/args.json"
-    act = load_ACT(model_path)
+    model_path = "./data/data_dir/models/policy_best.ckpt"
+    args_file = "./data/data_dir/models/args.json"
+    args = json.load(open(args_file, 'r'))
+    modified_args = args.copy()
+    modified_args["gelsight_backbone_path"] = "none"
+    modified_args["vision_backbone_path"] = "none"
+    act = load_ACT(model_path, args_file, modified_args)
     print(act)
     print('Done')

@@ -38,6 +38,19 @@ for ep_id in range(3):
                         data=np.random.randint(0, 255, 
                                               (num_timesteps, 480, 640, 3), 
                                               dtype=np.uint8))
+        f.create_dataset('observations/images/realsence3', 
+                        data=np.random.randint(0, 255, 
+                                              (num_timesteps, 480, 640, 3), 
+                                              dtype=np.uint8))
+        f.create_dataset('observations/images/realsence4', 
+                        data=np.random.randint(0, 255, 
+                                              (num_timesteps, 480, 640, 3), 
+                                              dtype=np.uint8))
+        f.create_dataset('observations/images/realsence5', 
+                        data=np.random.randint(0, 255, 
+                                              (num_timesteps, 480, 640, 3), 
+                                              dtype=np.uint8))
+        
         
         # GelSight触觉传感器的深度应变图像
         f.create_dataset('observations/gelsight/depth_strain_image',

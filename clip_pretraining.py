@@ -621,11 +621,13 @@ def clip_pretraining(train_loader: DataLoader,
 def run_clip_pretraining():
     from utils import get_norm_stats
     # ============ Training Configuration ============
-    n_epochs = 301  # Total training epochs (1500 + 1 for checkpoint alignment)
+    n_epochs = 1501  # Total training epochs (1500 + 1 for checkpoint alignment)
     num_episodes = 3
-    dataset_dir = "./data/data_dir/data"
-    save_dir = "./data/data_dir/clip_models"
-    camera_names = ['realsence1', 'realsence2']
+    # dataset_dir = "./data/data_dir/data"
+    dataset_dir = "/media/neuzz/HLX/zz/DataSet_HDF5"
+    # save_dir = "./data/data_dir/clip_models"
+    save_dir = "/media/neuzz/HLX/zz/clip_models"
+    camera_names = ['realsence1', 'realsence2', 'realsence3', 'realsence4', 'realsence5']
     norm_stats = get_norm_stats(dataset_dir, num_episodes, use_existing=True)
     batch_size_train = 3
     batch_size_test = 3
